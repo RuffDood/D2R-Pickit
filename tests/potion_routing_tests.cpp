@@ -123,6 +123,15 @@ int main() {
   CHECK(!CanRoute(&player, &health, route));
   Stop();
   CHECK(!CanRoute(&player, &health, route));
+  // The context-owned hook remains installed until loader teardown finishes.
+  const auto manualBeforeStop = manual;
+  slot = -1;
+  CHECK(HookGetFreeBeltSlot(&inventory, &health, &slot, false) == 1 && slot == 14);
+  CHECK(manual == manualBeforeStop + 1);
+  Stop(); // Repeated activation-failure/unload cleanup must preserve delegation.
+  slot = -1;
+  CHECK(HookGetFreeBeltSlot(&inventory, &health, &slot, false) == 1 && slot == 14);
+  CHECK(manual == manualBeforeStop + 2);
   std::cout << "Potion columns, belt height, fallback, GUID scope and "
                "exception cleanup: "
             << failures << " failures\n";

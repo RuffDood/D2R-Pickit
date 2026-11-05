@@ -103,6 +103,24 @@ int main(int argc, char** argv) {
         "[potion_routing.rejuvenation]\ninventory_fallback=1"})
         CHECK(!ParseConfig(invalid, reread, error));
 
+    for (const auto* columns : {"[1, 2,]", "[\n 1, # first ] is a comment\n\n 2,\n]", "[\r\n1,\r\n2,\r\n]"}) {
+        const auto text = std::string("[potion_routing.health]\nbelt_columns = ") + columns
+            + " # keep tail\ninventory_fallback = true\n[potion_routing]\nenabled = false\n";
+        Config before, after;
+        CHECK(ParseConfig(text, before, error));
+        CHECK(!before.potionRouting.enabled && before.potionRouting.families[0].count == 2);
+        CHECK(before.potionRouting.families[0].inventoryFallback);
+        after = before;
+        CHECK(RuffnecKk::PotionRouting::ParseColumns("[4, 3,]", after.potionRouting.families[0]));
+        CHECK(SaveSettings(text, before, after, output, error));
+        CHECK(ParseConfig(output, reread, error) && SameSettings(reread, after));
+        CHECK(output.find("# keep tail") != std::string::npos);
+        if (text.find("# first") != std::string::npos)
+            CHECK(output.find("# first ] is a comment") != std::string::npos);
+    }
+    for (const auto* columns : {"[1,,2]", "[,1]", "[1,1,]", "[0,]", "[5,]", "[1,\n", "[1 2]", "[1,] trailing"})
+        CHECK(!ParseConfig(std::string("[potion_routing.mana]\nbelt_columns=") + columns, reread, error));
+
     std::array<std::array<std::uint32_t, 5>, 12> rows{};
     for (std::uint32_t i = 0; i < rows.size(); ++i) {
         // Distinct, format-valid decoys are rejected by semantic lookup.

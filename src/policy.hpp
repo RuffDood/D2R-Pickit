@@ -135,7 +135,16 @@ inline auto ParseConfig(std::string_view input, Config& output, std::string& err
             const auto k = key == "belt_columns" ? 0U : key == "inventory_fallback" ? 1U : 2U;
             if (k == 2 || potionSeen[family][k]) return fail("unknown or duplicate potion routing setting");
             auto& route = parsed.potionRouting.families[family];
-            if (!(k == 0 ? PotionRouting::ParseColumns(value, route) : ParseBool(value, route.inventoryFallback)))
+            std::string list(value);
+            if (k == 0 && !value.empty() && value.front() == '[') while (list.find(']') == std::string::npos) {
+                if (start > input.size()) return fail("unterminated belt-column list");
+                ++lineNumber;
+                const auto nextEnd = input.find('\n', start);
+                list += ' ';
+                list += Trim(WithoutComment(input.substr(start, nextEnd == std::string_view::npos ? input.size() - start : nextEnd - start)));
+                start = nextEnd == std::string_view::npos ? input.size() + 1 : nextEnd + 1;
+            }
+            if (!(k == 0 ? PotionRouting::ParseColumns(Trim(list), route) : ParseBool(value, route.inventoryFallback)))
                 return fail("belt_columns needs unique columns 1..4; inventory_fallback needs true/false");
             potionSeen[family][k] = true; continue;
         }

@@ -342,7 +342,8 @@ void Stop() noexcept {
   Ready = false;
   ResetRoutingScope();
   ReleaseRouteAdvisor();
-  OriginalGetFreeBeltSlot = nullptr;
+  // The loader removes the context-owned hook after Stop() returns. Native
+  // lookups in that interval must still be able to call the trampoline.
   Context = nullptr;
   Base = nullptr;
   GetInventory = nullptr;

@@ -181,8 +181,8 @@ inline auto ParseColumns(std::string_view value, Route &route) -> bool {
     if (comma == std::string_view::npos)
       break;
     value = trim(value.substr(comma + 1));
-    if (value.empty())
-      return false;
+    // TOML permits a comma after the final element. Empty elements between
+    // commas still fail the single-column validation above.
   }
   route = next;
   return true;

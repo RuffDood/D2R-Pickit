@@ -219,7 +219,7 @@ inline auto SaveSettings(std::string text, const Config& expected, const Config&
         patch("potion_routing", "enabled", draft.potionRouting.enabled ? "true" : "false");
     for (std::size_t i=0;i<3;++i) {
         const auto& before=current.potionRouting.families[i];const auto& after=draft.potionRouting.families[i];
-        if(before.columns!=after.columns || before.count!=after.count) patch(PotionRouting::Sections[i],"belt_columns",PotionRouting::ColumnsText(after));
+        if(before.columns!=after.columns || before.count!=after.count) PatchScalar(text,PotionRouting::Sections[i],"belt_columns",PotionRouting::ColumnsText(after),true);
         if(before.inventoryFallback!=after.inventoryFallback) patch(PotionRouting::Sections[i],"inventory_fallback",after.inventoryFallback?"true":"false");
     }
     Config verify;
